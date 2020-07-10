@@ -11755,14 +11755,14 @@ body:before {
   right: 0;
   bottom: 0;
   left: 0;
-  opacity: 0.01;
+  opacity: 0.75;
   transition: opacity 1s;
   background: url("https://api.btstu.cn/sjbz/?lx=dongman&format=images&method=pc") center 0 no-repeat;
   background-size: cover;
 }
 @media screen and (max-width: 768px) {
   body:before {
-    background-image: url("https://joe-1253912574.cos.ap-shenzhen-fsi.myqcloud.com/images/wallhaven-4yd2el.png");
+    background-image: url("https://api.btstu.cn/sjbz/?lx=dongman&format=images&method=mobile");
   }
 }
 body.ready:before {
