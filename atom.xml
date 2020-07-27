@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://blog.joecoding.cn/"/>
-  <updated>2020-07-24T08:19:49.881Z</updated>
+  <updated>2020-07-27T07:21:13.070Z</updated>
   <id>https://blog.joecoding.cn/</id>
   
   <author>
@@ -15,6 +15,44 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>记一次RestControllerAdvice无法拦截Filter内抛出异常</title>
+    <link href="https://blog.joecoding.cn/2020-07-27/%E8%AE%B0%E4%B8%80%E6%AC%A1RestControllerAdvice%E6%97%A0%E6%B3%95%E6%8B%A6%E6%88%AAFilter%E5%86%85%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8/"/>
+    <id>https://blog.joecoding.cn/2020-07-27/%E8%AE%B0%E4%B8%80%E6%AC%A1RestControllerAdvice%E6%97%A0%E6%B3%95%E6%8B%A6%E6%88%AAFilter%E5%86%85%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8/</id>
+    <published>2020-07-27T07:17:52.728Z</published>
+    <updated>2020-07-27T07:21:13.070Z</updated>
+    
+    <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js"></script><p>今天有同事用到Shiro使用JWT的时候在Filter里做身份验证，然后在里面catch捕获并抛出了自定义异常。我们这边是用的RestControllerAdvice做统一异常处理，然后这个异常并没有被RestControllerAdvice所拦截到</p><h4 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h4><p>请求进来 会按照 filter -&gt; interceptor -&gt; controllerAdvice -&gt; aspect  -&gt; controller的顺序调用</p><p>当controller返回异常 也会按照controller -&gt; aspect -&gt; controllerAdvice -&gt; interceptor -&gt; filter来依次抛出 </p><p>这种Filter发生的404、405、500错误都会到Spring默认的异常处理。如果你在配置文件配置了server.error.path的话，就会使用你配置的异常处理地址，如果没有就会使用你配置的error.path路径地址，如果还是没有，默认使用/error来作为发生异常的处理地址。如果想要替换默认的非Controller异常处理直接实现Spring提供的ErrorController接口就行了</p><h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><p>新建一个ErrorControllerImpl  实现ErrorController 把ErrorPath 指向<code>error</code> 再写一个方法把Error抛出 然后Controller全局统一异常处理RestControllerAdvice就能捕获到异常了</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.boot.web.servlet.error.ErrorController;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Controller;</span><br><span class="line"><span class="keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.servlet.http.HttpServletRequest;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Joe</span></span><br><span class="line"><span class="comment"> * createTime 2020/07/27 14:39</span></span><br><span class="line"><span class="comment"> * mail joe-code@foxmail.com</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ErrorControllerImpl</span> <span class="keyword">implements</span> <span class="title">ErrorController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getErrorPath</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"/error"</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@RequestMapping</span>(<span class="string">"/error"</span>)</span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleError</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (request.getAttribute(<span class="string">"javax.servlet.error.exception"</span>) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> (Throwable) request.getAttribute(<span class="string">"javax.servlet.error.exception"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>参考stackoverflow链接 <a href="https://stackoverflow.com/questions/34595605/how-to-manage-exceptions-thrown-in-filters-in-spring">https://stackoverflow.com/questions/34595605/how-to-manage-exceptions-thrown-in-filters-in-spring</a> </p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;link rel=&quot;stylesheet&quot; class=&quot;aplayer-secondary-style-marker&quot; href=&quot;/assets/css/APlayer.min.css&quot;&gt;&lt;script src=&quot;/assets/js/APlayer.min.js&quot; cla
+      
+    
+    </summary>
+    
+    
+      <category term="Java" scheme="https://blog.joecoding.cn/categories/Java/"/>
+    
+      <category term="SpringBoot" scheme="https://blog.joecoding.cn/categories/SpringBoot/"/>
+    
+      <category term="Spring" scheme="https://blog.joecoding.cn/categories/Spring/"/>
+    
+    
+      <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
+    
+      <category term="Spring" scheme="https://blog.joecoding.cn/tags/Spring/"/>
+    
+      <category term="SpringBoot" scheme="https://blog.joecoding.cn/tags/SpringBoot/"/>
+    
+      <category term="Filter" scheme="https://blog.joecoding.cn/tags/Filter/"/>
+    
+      <category term="拦截器" scheme="https://blog.joecoding.cn/tags/%E6%8B%A6%E6%88%AA%E5%99%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>Nacos 单机、集群安装 Mysql持久化</title>
@@ -37,18 +75,18 @@
     
       <category term="Java" scheme="https://blog.joecoding.cn/categories/Java/"/>
     
-      <category term="Nacos" scheme="https://blog.joecoding.cn/categories/Nacos/"/>
-    
       <category term="SpringCloud" scheme="https://blog.joecoding.cn/categories/SpringCloud/"/>
     
+      <category term="Nacos" scheme="https://blog.joecoding.cn/categories/Nacos/"/>
     
-      <category term="Nacos" scheme="https://blog.joecoding.cn/tags/Nacos/"/>
     
       <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
     
-      <category term="注册中心" scheme="https://blog.joecoding.cn/tags/%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/"/>
-    
       <category term="SpringCloud" scheme="https://blog.joecoding.cn/tags/SpringCloud/"/>
+    
+      <category term="Nacos" scheme="https://blog.joecoding.cn/tags/Nacos/"/>
+    
+      <category term="注册中心" scheme="https://blog.joecoding.cn/tags/%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/"/>
     
   </entry>
   
@@ -80,9 +118,9 @@
     
       <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
     
-      <category term="SpringCloud" scheme="https://blog.joecoding.cn/tags/SpringCloud/"/>
-    
       <category term="Feign" scheme="https://blog.joecoding.cn/tags/Feign/"/>
+    
+      <category term="SpringCloud" scheme="https://blog.joecoding.cn/tags/SpringCloud/"/>
     
   </entry>
   
