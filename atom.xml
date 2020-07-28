@@ -75,9 +75,9 @@
     
       <category term="Java" scheme="https://blog.joecoding.cn/categories/Java/"/>
     
-      <category term="SpringCloud" scheme="https://blog.joecoding.cn/categories/SpringCloud/"/>
-    
       <category term="Nacos" scheme="https://blog.joecoding.cn/categories/Nacos/"/>
+    
+      <category term="SpringCloud" scheme="https://blog.joecoding.cn/categories/SpringCloud/"/>
     
     
       <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
@@ -116,9 +116,9 @@
       <category term="Feign" scheme="https://blog.joecoding.cn/categories/SpringCloud/Feign/"/>
     
     
-      <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
-    
       <category term="Feign" scheme="https://blog.joecoding.cn/tags/Feign/"/>
+    
+      <category term="Java" scheme="https://blog.joecoding.cn/tags/Java/"/>
     
       <category term="SpringCloud" scheme="https://blog.joecoding.cn/tags/SpringCloud/"/>
     
