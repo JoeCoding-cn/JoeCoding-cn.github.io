@@ -11022,6 +11022,18 @@ footer.footer .level-end .field {
   display: flex;
   flex-grow: 1;
 }
+.searchbox .searchbox-pinyin {
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+.searchbox .searchbox-pinyin input {
+  vertical-align: middle;
+}
+.searchbox .searchbox-pinyin span {
+  position: relative;
+  top: 1px;
+}
 .searchbox .searchbox-input {
   flex-grow: 1;
   color: inherit;

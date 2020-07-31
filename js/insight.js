@@ -6,6 +6,19 @@ function loadInsight(config, translation) { // eslint-disable-line no-unused-var
     const $main = $('.searchbox');
     const $input = $main.find('.searchbox-input');
     const $container = $main.find('.searchbox-body');
+    const $searchByPinyin = $main.find('#search-by-pinyin');
+
+    /**
+     * 查询匹配拼音的数据。性能低于普通匹配，如果未启用拼音检索模式，直接返回 false。
+     * https://github.com/xmflswood/pinyin-match
+     * @param input {string} 目标字符串
+     * @param keyword {string} 输入的拼音或其他关键词
+     * @returns {[Array]|{Boolean}}
+     */
+    function pinyinMatch(input, keyword) {
+        if (!$searchByPinyin.prop("checked")) return false;
+        return PinyinMatch.match(input, keyword);
+    }
 
     function section(title) {
         return $('<section>').addClass('searchbox-result-section').append($('<header>').text(title));
@@ -33,10 +46,12 @@ function loadInsight(config, translation) { // eslint-disable-line no-unused-var
         const testText = text.toLowerCase();
         const indices = matches.map(match => {
             const index = testText.indexOf(match.toLowerCase());
-            if (!match || index === -1) {
-                return null;
+            if (match && index !== -1) {
+                return [index, index + match.length];
             }
-            return [index, index + match.length];
+            // Search by pinyin
+            const pinyinIndex = pinyinMatch(testText, match.toLowerCase());
+            return pinyinIndex ? [pinyinIndex[0], pinyinIndex[1] + 1] : null;
         }).filter(match => {
             return match !== null;
         }).sort((a, b) => {
@@ -139,6 +154,8 @@ function loadInsight(config, translation) { // eslint-disable-line no-unused-var
                     return false;
                 }
                 if (obj[field].toLowerCase().indexOf(keyword) > -1) {
+                    return true;
+                } else if (pinyinMatch(obj[field].toLowerCase(), keyword)) {
                     return true;
                 }
                 return false;
@@ -266,10 +283,12 @@ function loadInsight(config, translation) { // eslint-disable-line no-unused-var
         if (location.hash.trim() === '#insight-search') {
             $main.addClass('show');
         }
-        $input.on('input', function() {
-            const keywords = $(this).val();
+        function onInputChange() {
+            const keywords = $input.val();
             searchResultToDOM(keywords, search(json, keywords));
-        });
+        }
+        $input.on('input', onInputChange);
+        $searchByPinyin.on('change', onInputChange);
         $input.trigger('input');
     });
 
